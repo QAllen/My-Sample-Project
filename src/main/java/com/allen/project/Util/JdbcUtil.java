@@ -18,14 +18,14 @@ public class JdbcUtil
     }  
     public static Connection getConnection(){  
       String url =   
-        "jdbc:oracle:thin:@127.0.0.1:1521:orcl";  
-      String usr = "test";  
-      String pwd = "test";  
+        "jdbc:oracle:thin:@10.180.6.151:1521:SBP";  
+      String usr = "epms";  
+      String pwd = "epms";  
       Connection con = null;  
       try{  
         con = DriverManager.getConnection(url,usr,pwd);  
       }catch(Exception e){  
-        e.printStackTrace();  
+    	  throw new RuntimeException(e);    
       }  
       return con;  
     }  
@@ -34,7 +34,7 @@ public class JdbcUtil
           if(stmt!=null) stmt.close();  
           if(conn!=null) conn.close();  
         }catch(Exception ex){  
-          ex.printStackTrace();  
+        	throw new RuntimeException(ex);  
         }  
     }  
     public static void close(ResultSet rs, Statement stmt,Connection conn){  
@@ -43,7 +43,7 @@ public class JdbcUtil
     		if(stmt!=null) stmt.close();  
     		if(conn!=null) conn.close();  
     	}catch(Exception ex){  
-    		ex.printStackTrace();  
+    		 throw new RuntimeException(ex);    
     	}  
     }  
       
@@ -61,7 +61,7 @@ public class JdbcUtil
         }  
         System.out.print(sb.toString());  
       }catch(Exception e){  
-        e.printStackTrace();  
+    	  throw new RuntimeException(e); 
       }  
     }  
 }  

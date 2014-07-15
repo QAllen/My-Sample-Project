@@ -66,7 +66,10 @@ public class StringFormat {
 	 * @return
 	 */
 	public static String fillRightPadString(String s,int length, String str){
-		return StringUtils.rightPad(StringUtils.defaultString(s),length,str);
+		if("0".equals(str)){
+			return StringUtils.rightPad(StringUtils.defaultString(s),length,str);
+		}
+		return StringUtils.rightPad("".equals(StringUtils.defaultString(s))==true?"/":s,length,str);
 	}
 	
 	/**
