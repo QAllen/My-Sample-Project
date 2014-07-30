@@ -914,4 +914,5 @@ public class TiEpisBackinterfaceCurrent implements Serializable {
         result = prime * result + ((getAlternativePartno() == null) ? 0 : getAlternativePartno().hashCode());
         return result;
     }
+
 }

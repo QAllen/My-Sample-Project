@@ -35,16 +35,21 @@ public class FileUtil {
 			String encoding) throws IOException {
 		File file = new File(filePath);
 		BufferedWriter bw = null;
-		file.createNewFile();
-		bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
-				file), encoding));
-		for (String s : list) {
-			bw.write(s);
-			bw.newLine();// 换行
+		try {
+			file.createNewFile();
+
+			bw = new BufferedWriter(new OutputStreamWriter(
+					new FileOutputStream(file), encoding));
+			for (String s : list) {
+				bw.write(s);
+				bw.newLine();// 换行
+			}
+			bw.flush();
+
+		} finally {
+			if (bw != null)
+				bw.close();
 		}
-		bw.flush();
-		if (bw != null)
-			bw.close();
 	}
 
 	/**
@@ -63,19 +68,26 @@ public class FileUtil {
 		int bytesum = 0;
 		int byteread = 0;
 		File oldfile = new File(oldPath);
-		if (oldfile.exists()) { // 文件存在时
-			inStream = new FileInputStream(oldPath); // 读入原文件
-			fs = new FileOutputStream(newPath);
-			byte[] buffer = new byte[1444];
-			int length;
-			while ((byteread = inStream.read(buffer)) != -1) {
-				bytesum += byteread; // 字节数 文件大小
-				fs.write(buffer, 0, byteread);
+		try {
+			if (oldfile.exists()) { // 文件存在时
+				inStream = new FileInputStream(oldPath); // 读入原文件
+				fs = new FileOutputStream(newPath);
+				byte[] buffer = new byte[1444];
+				int length;
+				while ((byteread = inStream.read(buffer)) != -1) {
+					bytesum += byteread; // 字节数 文件大小
+					fs.write(buffer, 0, byteread);
+				}
+			}
+
+		} finally {
+			if (inStream != null) {
+				inStream.close();
+			}
+			if (fs != null) {
+				fs.close();
 			}
 		}
-
-		inStream.close();
-		fs.close();
 
 	}
 

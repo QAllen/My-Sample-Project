@@ -56,6 +56,8 @@ public class BackInterface {
 	public final static String FORWARD_SLASH = "/";// 正斜杠占位符
 
 	public final static String SPACE = " ";// 空格占位符
+	
+	public final static String X = "x";// x占位符
 
 	public final static Long USERID = -1L;// 系统用户
 
@@ -156,7 +158,7 @@ public class BackInterface {
 					+ "       id_for_product,"
 					+ "       alternative_partno"
 					+ "  from ti_epis_backinterface_current tebc "
-					+ " where exists (select 1 from ti_part_increament tpi where tebc.part_number=tpi.part_sapcode and tpi.status = 'S')";
+					+ " where exists (select 1 from ti_part_increament tpi where tebc.part_number=tpi.part_sapcode)";
 
 			ps = conn.prepareStatement(sql);
 			rs = ps.executeQuery();
@@ -234,12 +236,12 @@ public class BackInterface {
 				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE")) == true ? "0.000"
 								: rs.getString("PRICE"), 12,
-						BackInterface.SPACE));
+						BackInterface.X));
 				// 对应接口文件字段NO.22,单价字段默认0.000
 				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE_EURO")) == true ? "0.000"
 								: rs.getString("PRICE_EURO"), 12,
-						BackInterface.SPACE));// 单价
+						BackInterface.X));// 单价
 				// 对应接口文件字段NO.23
 				sb.append(StringFormat.fillRightPadString(
 						rs.getString("PRICE_DATE"), 8, "0"));// 定价日期
@@ -247,15 +249,15 @@ public class BackInterface {
 				sb.append(StringFormat.fillRightPadString(
 						rs.getString("DISCOUNT_GROUP"), 2, BackInterface.SPACE));
 				// 对应接口文件字段NO.25,单价字段默认0.000
-				sb.append(StringFormat.fillRightPadString(
+				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE_V_PARTS")) == true ? "0.000"
 								: rs.getString("PRICE_V_PARTS"), 12,
-						BackInterface.SPACE));
+						BackInterface.X));
 				// 对应接口文件字段NO.26,单价字段默认0.000
-				sb.append(StringFormat.fillRightPadString(
+				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE_V_PARTS_EURO")) == true ? "0.000"
 								: rs.getString("PRICE_V_PARTS_EURO"), 12,
-						BackInterface.SPACE));
+						BackInterface.X));
 				// 对应接口文件字段NO.27
 				sb.append(StringFormat.fillRightPadString(
 						rs.getString("PRICE_V_PARTS_DATE"), 8, "0"));
@@ -264,15 +266,15 @@ public class BackInterface {
 						rs.getString("MATERIAL_GROUP_4"), 2,
 						BackInterface.SPACE));
 				// 对应接口文件字段NO.29,单价字段默认0.000
-				sb.append(StringFormat.fillRightPadString(
+				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE_Y_PARTS")) == true ? "0.000"
 								: rs.getString("PRICE_Y_PARTS"), 12,
-						BackInterface.SPACE));
+						BackInterface.X));
 				// 对应接口文件字段NO.30,单价字段默认0.000
-				sb.append(StringFormat.fillRightPadString(
+				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE_Y_PARTS_EURO")) == true ? "0.000"
 								: rs.getString("PRICE_Y_PARTS_EURO"), 12,
-						BackInterface.SPACE));
+						BackInterface.X));
 				// 对应接口文件字段NO.31
 				sb.append(StringFormat.fillRightPadString(
 						rs.getString("PRICE_Y_PARTS_DATE"), 8, "0"));
@@ -283,7 +285,7 @@ public class BackInterface {
 				sb.append(StringFormat.fillRightPadString(
 						rs.getString("ESTIMATED_PRICE"), 1, BackInterface.SPACE));
 				// 对应接口文件字段NO.34
-				sb.append(StringFormat.fillRightPadString(
+				sb.append(StringFormat.fillLeftPadString(
 						rs.getString("WEIGHT"), 14, BackInterface.SPACE));// 重量
 				// 对应接口文件字段NO.35
 				sb.append(StringFormat.fillRightPadString(
@@ -413,11 +415,9 @@ public class BackInterface {
 			}
 			// String ver_no = sdf.format(new Date());
 			// TODO:此处上测试生产需要更改为上边注释的
-			String ver_no = "2014-04-21";
-			// 插入接口数据历史表
+			String ver_no = "2014-04-24";
+			// 插入接口数据历史表，并删除增量表数据
 			addBackInterfaceRecordHistory(ver_no);
-			// 生成接口文件后把增量表中要生成的数据状态置为逻辑删除
-			modifyIncreamPartCode();
 
 			String filePath_src = BackInterface.FILE_PATH_SRC
 					+ BackInterface.FILE_NAME;
@@ -445,34 +445,22 @@ public class BackInterface {
 	}
 
 	/**
-	 * 生成接口文件后把增量表中要生成的数据状态置为逻辑删除
+	 * 生成接口文件后把增量表中生成的数据删除
+	 * @throws SQLException 
 	 */
-	public void modifyIncreamPartCode() {
-		Connection conn = null;
+	public void modifyIncreamPartCode(Connection conn) throws SQLException {
 		PreparedStatement ps = null;
-		String sql = "update ti_part_increament set STATUS = 'D',update_by = ?,update_date=sysdate where STATUS = 'S'";
-		try {
+//		String sql = "update ti_part_increament set STATUS = 'D',update_by = ?,update_date=sysdate where STATUS = 'S'";
+		String sql = "delete from ti_part_increament";
 			conn = JdbcUtil.getConnection();
-			conn.setAutoCommit(false);
 			ps = conn.prepareStatement(sql);
-			ps.setLong(1, BackInterface.USERID);
+//			ps.setLong(1, BackInterface.USERID);
 			ps.executeUpdate();
-			conn.commit();
-		} catch (SQLException e) {
-			try {
-				conn.rollback();
-			} catch (SQLException e1) {
-				throw new RuntimeException(e1);
-			}
-			throw new RuntimeException(e);
-		} finally {
-			JdbcUtil.close(ps, conn);
-		}
-
+			ps.close();
 	}
 
 	/**
-	 * 插入接口数据历史表
+	 * 插入接口数据历史表,并删除增量表中数据
 	 * 
 	 * @param ver_no
 	 *            版本号
@@ -485,13 +473,15 @@ public class BackInterface {
 				+ ver_no
 				+ "' as ver_no, create_by, create_date, update_by, update_date, record_type, part_number, production_plant, kind_of_material, available_stock, total_consumption_current_year, total_consumption, location, life_circle, disposition_code, end_of_supply_time, surface_treat, premium_code, fertigungsort_s, statussymbol_t, gesamt_lagernull, kennzeichen, material_group, entfall_w, lager_bestand, price, price_euro, price_date, discount_group, price_v_parts, price_v_parts_euro, price_v_parts_date, material_group_4, price_y_parts, price_y_parts_euro, price_y_parts_date, dicount_group, estimated_price, weight, weight_unit, dimension, estimated_weight, estimated_dimension, material_planer, subject_area_pricing, purchaser_group, stock_zero, compound_supplier, dangerous_goods_indicator, environmentally_relevant, hazardous_material_numbe, minimum_remaining_shelf_life, shelf_life_expiration_date, calculation_of_sled, storage_percentage, total_shelf_life, danger_good_key, maximum_storage_period, unit_maximum_storage_period, postponed_spare_starting_date, lock_of_availability_check, number_x_part, item_type, component_type, limited_storing_time, dangerous_goods, class_of_fire_danger, ball_bearing_flag, packaging_number, manufacturer_part_no, product_hierarchie, dispocode, id_for_product, alternative_partno "
 				+ " from ti_epis_backinterface_current tebc"
-				+ " where exists (select 1 from ti_part_increament tpi where tebc.part_number=tpi.part_sapcode and tpi.status = 'S')";
+				+ " where exists (select 1 from ti_part_increament tpi where tebc.part_number=tpi.part_sapcode)";
 
 		try {
 			conn = JdbcUtil.getConnection();
 			conn.setAutoCommit(false);
 			ps = conn.prepareStatement(sql);
 			ps.execute();
+			//TODO:记得开启
+//			modifyIncreamPartCode(conn);//删除增量表数据
 			conn.commit();
 		} catch (SQLException e) {
 			try {

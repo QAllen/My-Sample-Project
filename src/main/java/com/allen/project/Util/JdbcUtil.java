@@ -1,9 +1,14 @@
 package com.allen.project.Util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.sql.Connection;  
 import java.sql.DriverManager;  
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;  
 import java.sql.ResultSetMetaData;  
+import java.sql.SQLException;
 import java.sql.Statement;  
   
 public class JdbcUtil  
@@ -46,6 +51,14 @@ public class JdbcUtil
     		 throw new RuntimeException(ex);    
     	}  
     }  
+    public static void close(ResultSet rs, Statement stmt){  
+    	try{  
+    		if(rs!=null) rs.close();  
+    		if(stmt!=null) stmt.close();  
+    	}catch(Exception ex){  
+    		throw new RuntimeException(ex);    
+    	}  
+    }  
       
     public static void printRs(ResultSet rs){  
       try{  
@@ -57,11 +70,85 @@ public class JdbcUtil
             sb.append(meta.getColumnName(i)+"->");  
             sb.append(rs.getString(i)+"  ");
           }  
-          sb.append("\n");  
+          sb.append("");  
         }  
         System.out.print(sb.toString());  
       }catch(Exception e){  
     	  throw new RuntimeException(e); 
       }  
-    }  
+    }
+    
+    public static void addErrorLog(Throwable t, String partcode, String errorInfro){
+    	Connection conn = null;
+		PreparedStatement ps = null;
+		String sql = "insert into ti_back_interface_error_log" +
+						"      (id, error_info, error_detail, error_partcode, create_by, create_date)" + 
+						" values" + 
+						"     (SEQ_TI_BACK_INTERFACE_ERRLOG.Nextval, ?, ?, ?, -1, sysdate)";
+		conn = JdbcUtil.getConnection();
+		try {
+			ps = conn.prepareStatement(sql);
+			conn.setAutoCommit(false);
+			ps.setString(1, errorInfro);
+			ps.setString(2, JdbcUtil.exception(t));
+			ps.setString(3, partcode);
+			ps.executeUpdate();
+			conn.commit();
+		} catch (Exception e) {
+			e.printStackTrace();
+			try {
+				conn.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		} finally{
+			JdbcUtil.close(ps, conn);
+		}
+
+    }
+    public static void addErrorLog(Throwable t, String errorInfro){
+    	Connection conn = null;
+    	PreparedStatement ps = null;
+    	String sql = "insert into ti_back_interface_error_log" +
+    			"      (id, error_info, error_detail, create_by, create_date)" + 
+    			" values" + 
+    			"     (SEQ_TI_BACK_INTERFACE_ERRLOG.Nextval, ?, ?, -1, sysdate)";
+    	conn = JdbcUtil.getConnection();
+    	try {
+    		ps = conn.prepareStatement(sql);
+    		conn.setAutoCommit(false);
+    		ps.setString(1, errorInfro);
+    		ps.setString(2, JdbcUtil.exception(t));
+    		ps.executeUpdate();
+    		conn.commit();
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		try {
+    			conn.rollback();
+    		} catch (SQLException e1) {
+    			e1.printStackTrace();
+    		}
+    	} finally{
+    		JdbcUtil.close(ps, conn);
+    	}
+    	
+    }
+    
+    /**
+     * 将异常信息转化成字符串
+     * @param t
+     * @return
+     * @throws IOException 
+     */
+    private static String exception(Throwable t) throws IOException{
+        if(t == null)
+            return null;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try{
+            t.printStackTrace(new PrintStream(baos));
+        }finally{
+            baos.close();
+        }
+        return baos.toString();
+    }
 }  

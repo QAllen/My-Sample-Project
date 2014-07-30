@@ -145,7 +145,10 @@ public class GetPartConsumption {
 		}
 		return list;
 	}
-	
+	/**
+	 * 获取某年销量
+	 * @param year
+	 */
 	public void modifyPartSale(String year){
 		List<Map<String,String>> totalCurrent = getPartConsumptionCount(year);//某年销量
 		List<String> part_sapcodeList = getPartCodeFromPartSale(year);//TI_PART_SALE 某年的part_sapcode
