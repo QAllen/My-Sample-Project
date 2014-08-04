@@ -180,13 +180,13 @@ public class BackInterface {
 						rs.getString("KIND_OF_MATERIAL"), 2,
 						BackInterface.SPACE));// 零件类别,长度2
 				// 对应接口文件字段NO.5
-				sb.append(StringFormat.fillRightPadString(
+				sb.append(StringFormat.fillLeftPadString(
 						rs.getString("AVAILABLE_STOCK"), 14, "0"));// 库存,长度14
 				// 对应接口文件字段NO.6
-				sb.append(StringFormat.fillRightPadString(
+				sb.append(StringFormat.fillLeftPadString(
 						rs.getString("TOTAL_CONSUMPTION_CURRENT_YEAR"), 14, "0"));// 当年销量,长度14
 				// 对应接口文件字段NO.7
-				sb.append(StringFormat.fillRightPadString(
+				sb.append(StringFormat.fillLeftPadString(
 						rs.getString("TOTAL_CONSUMPTION"), 14, "0"));// 前一年销量,长度14
 				// 对应接口文件字段NO.8
 				sb.append(StringFormat.fillRightPadString(
@@ -236,12 +236,12 @@ public class BackInterface {
 				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE")) == true ? "0.000"
 								: rs.getString("PRICE"), 12,
-						BackInterface.X));
+						BackInterface.SPACE));
 				// 对应接口文件字段NO.22,单价字段默认0.000
 				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE_EURO")) == true ? "0.000"
 								: rs.getString("PRICE_EURO"), 12,
-						BackInterface.X));// 单价
+						BackInterface.SPACE));// 单价
 				// 对应接口文件字段NO.23
 				sb.append(StringFormat.fillRightPadString(
 						rs.getString("PRICE_DATE"), 8, "0"));// 定价日期
@@ -252,12 +252,12 @@ public class BackInterface {
 				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE_V_PARTS")) == true ? "0.000"
 								: rs.getString("PRICE_V_PARTS"), 12,
-						BackInterface.X));
+						BackInterface.SPACE));
 				// 对应接口文件字段NO.26,单价字段默认0.000
 				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE_V_PARTS_EURO")) == true ? "0.000"
 								: rs.getString("PRICE_V_PARTS_EURO"), 12,
-						BackInterface.X));
+						BackInterface.SPACE));
 				// 对应接口文件字段NO.27
 				sb.append(StringFormat.fillRightPadString(
 						rs.getString("PRICE_V_PARTS_DATE"), 8, "0"));
@@ -269,12 +269,12 @@ public class BackInterface {
 				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE_Y_PARTS")) == true ? "0.000"
 								: rs.getString("PRICE_Y_PARTS"), 12,
-						BackInterface.X));
+						BackInterface.SPACE));
 				// 对应接口文件字段NO.30,单价字段默认0.000
 				sb.append(StringFormat.fillLeftPadString(
 						StringUtils.isEmpty(rs.getString("PRICE_Y_PARTS_EURO")) == true ? "0.000"
 								: rs.getString("PRICE_Y_PARTS_EURO"), 12,
-						BackInterface.X));
+						BackInterface.SPACE));
 				// 对应接口文件字段NO.31
 				sb.append(StringFormat.fillRightPadString(
 						rs.getString("PRICE_Y_PARTS_DATE"), 8, "0"));
@@ -415,8 +415,8 @@ public class BackInterface {
 			}
 			// String ver_no = sdf.format(new Date());
 			// TODO:此处上测试生产需要更改为上边注释的
-			String ver_no = "2014-04-24";
-			// 插入接口数据历史表，并删除增量表数据
+			String ver_no = "2014-04-27";
+			// 插入接口数据历史表，更新哪些生成零件号的日期，并删除增量表数据
 			addBackInterfaceRecordHistory(ver_no);
 
 			String filePath_src = BackInterface.FILE_PATH_SRC
@@ -450,13 +450,30 @@ public class BackInterface {
 	 */
 	public void modifyIncreamPartCode(Connection conn) throws SQLException {
 		PreparedStatement ps = null;
-//		String sql = "update ti_part_increament set STATUS = 'D',update_by = ?,update_date=sysdate where STATUS = 'S'";
 		String sql = "delete from ti_part_increament";
+		try{
 			conn = JdbcUtil.getConnection();
 			ps = conn.prepareStatement(sql);
-//			ps.setLong(1, BackInterface.USERID);
 			ps.executeUpdate();
+		}finally{
 			ps.close();
+		}
+	}
+	/**
+	 * 把生成的增量表中数据更新到TI_PART_BASE_BI_RECORD
+	 * @throws SQLException 
+	 */
+	public void modifyTtPartBasePartCode(Connection conn) throws SQLException {
+		PreparedStatement ps = null;
+		String sql = "update TI_PART_BASE_BI_RECORD a set status = '1',update_by = -1,update_date = sysdate " +
+						" where exists (select 1 from ti_part_increament tpi where a.part_sapcode=tpi.part_sapcode)";
+		try{
+			conn = JdbcUtil.getConnection();
+			ps = conn.prepareStatement(sql);
+			ps.executeUpdate();
+		}finally{
+			ps.close();
+		}
 	}
 
 	/**
@@ -480,8 +497,10 @@ public class BackInterface {
 			conn.setAutoCommit(false);
 			ps = conn.prepareStatement(sql);
 			ps.execute();
+			modifyTtPartBasePartCode(conn);//同步更新零件号生成状态
 			//TODO:记得开启
 //			modifyIncreamPartCode(conn);//删除增量表数据
+			
 			conn.commit();
 		} catch (SQLException e) {
 			try {

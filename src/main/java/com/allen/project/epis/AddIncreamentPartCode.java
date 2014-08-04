@@ -195,7 +195,7 @@ public class AddIncreamentPartCode {
 	public String getAvailableStockByPartCode(String part_code, Connection conn)
 			throws SQLException {
 		String availableStock = "";
-		String sql = "select nvl(sh_total,0)+nvl(XA_TOTAL,0)+nvl(TJ_TOTAL,0)+nvl(GZ_TOTAL,0)+nvl(BJ_TOTAL,0)+nvl(HD_TOTAL,0)+nvl(JS_TOTAL,0)+nvl(RDC_TOTAL,0) "
+		String sql = "select  trunc(nvl(sh_total,0)+nvl(XA_TOTAL,0)+nvl(TJ_TOTAL,0)+nvl(GZ_TOTAL,0)+nvl(BJ_TOTAL,0)+nvl(HD_TOTAL,0)+nvl(JS_TOTAL,0)+nvl(RDC_TOTAL,0),0)  "
 				+ " from TI_PART_SAP_SUBCENTER_STOCK t where part_code = ?";
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -504,7 +504,7 @@ public class AddIncreamentPartCode {
 		boolean flag = false;
 		String limitedStoringTimeNew = StringUtils.defaultString(getLimitedStoringTime(conn,
 				part_code));
-		if(!StringUtils.isEmpty(limitedStoringTimeNew)){//如果不为空则默认J
+		if(StringUtils.isNotEmpty(limitedStoringTimeNew)){//如果不为空则默认J
 			limitedStoringTimeNew = "J";
 		}
 		
@@ -926,8 +926,8 @@ public class AddIncreamentPartCode {
 			String width = StringUtils.defaultString(getWidth(conn, part_code));
 			String height = StringUtils
 					.defaultString(getHeight(conn, part_code));
-			if (!StringUtils.isEmpty(length) && !StringUtils.isEmpty(width)
-					&& !StringUtils.isEmpty(height)) {// 长宽高都不为空时返回格式化后的尺寸，否则返回空值
+			if (StringUtils.isNotEmpty(length) && StringUtils.isNotEmpty(width)
+					&& StringUtils.isNotEmpty(height)) {// 长宽高都不为空时返回格式化后的尺寸，否则返回空值
 				temp = length + "X" + width + "X" + height;
 			}else{
 				temp = "";
@@ -1267,7 +1267,7 @@ public class AddIncreamentPartCode {
 			if (rs.next()) {
 				temp = rs.getString(1);
 			}
-			if(!StringUtils.isEmpty(temp)){
+			if(StringUtils.isNotEmpty(temp)){
 				DecimalFormat df = new DecimalFormat("#.000");//格式化小数后面3位
 				temp = df.format(Double.valueOf(temp));
 			}
