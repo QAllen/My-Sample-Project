@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +24,7 @@ public class AddIncreamentPartCode {
 		long startTime = System.currentTimeMillis(); // 获取开始时间
 		AddIncreamentPartCode a = new AddIncreamentPartCode();
 		PartCodeCurrentDetail b = new PartCodeCurrentDetail();
+		b.operBackInterfaceMaindata();
 		a.gerTransferPartCode(b.getModifyPartCode());
 		long endTime = System.currentTimeMillis(); // 获取结束时间
 		System.out.println("程序运行时间： " + (endTime - startTime) + "ms");
@@ -286,7 +288,7 @@ public class AddIncreamentPartCode {
 	 * @throws SQLException
 	 */
 	public boolean compareStopDate(String part_code, String stop_date,
-			Connection conn) throws SQLException {
+			Connection conn) throws Exception {
 		boolean flag = false;
 		String stop_dateNew = StringUtils.defaultString(getPartStopDate(
 				part_code, conn));
@@ -532,11 +534,12 @@ public class AddIncreamentPartCode {
 	 * @param conn
 	 * @return
 	 * @throws SQLException
+	 * @throws Exception 
 	 */
 	public String getPartStopDate(String part_code, Connection conn)
-			throws SQLException {
+			throws  Exception {
 		String stop_date = "";
-		String sql = "select stop_date from tt_part_base where part_sapcode = ?";
+		String sql = "select substr(stop_date,-2,2) from tt_part_base where part_sapcode = ?";
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
@@ -545,6 +548,20 @@ public class AddIncreamentPartCode {
 			rs = ps.executeQuery();
 			if (rs.next()) {
 				stop_date = rs.getString(1);
+			}
+			if(StringUtils.isNotEmpty(stop_date)){//如果停供日期不为空则按照计算方式来生成
+				SimpleDateFormat sd = new SimpleDateFormat ("yyyy");
+				
+				if (Integer.parseInt(stop_date) >= 70) {
+					stop_date = "19" + stop_date;
+				} else {
+					stop_date = "20" + stop_date;
+				}
+				Date temp  = sd.parse(stop_date);
+				GregorianCalendar gc = new GregorianCalendar();
+				gc.setTime(temp); 
+				gc.add(1,1);
+				stop_date = sd.format(gc.getTime());
 			}
 		} finally {
 			JdbcUtil.close(rs, ps);
@@ -1046,7 +1063,7 @@ public class AddIncreamentPartCode {
 		} else {
 			temp = forward;
 		}
-		return temp;
+		return temp.toUpperCase();
 	}
 
 	/**

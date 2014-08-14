@@ -13,7 +13,11 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * apache的common-io中有FileUtils不能使用时再用此
@@ -104,21 +108,27 @@ public class FileUtil {
 
 	}
 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException, IOException {
 
 		List<String> list = new ArrayList<String>();
 		String s = "123456";
 		long startTime = System.currentTimeMillis(); // 获取开始时间
-		// for (int i = 0; i < 1000; i++) {
-		// list.add("abc中华人民共和国" + i);
-		// }
-		// // File file = new File("E://a.txt");
-		// // generateFile(list, "E://DET.K7UHBE.D1B317SV", "UTF-8");
+		 for (int i = 0; i < 900000; i++) {
+		 list.add("abc中华人民共和国" + i);
+		 }
+		 File file = new File("E://a.txt");
+//		  generateFile(list, "E://DET.K7UHBE.D1B317SV", "UTF-8");
+//		  FileUtils.writeLines(file, list);
+		  for(int i=0;i<list.size();i++){
+			  String o = (String)list.get(i);
+			  byte[] b = FileUtils.readFileToByteArray(file);
+			  byte[] t = ArrayUtils.addAll(b, o.getBytes());
+			  FileUtils.writeByteArrayToFile(file,t);
+		  }
+				  
 		long endTime = System.currentTimeMillis(); // 获取结束时间
 		System.out.println("程序运行时间： " + (endTime - startTime) + "ms");
-		System.out
-				.println("1/////ZZZZZZZZZ7810HT000000000012340000000000111100000001111111//////2019/////////14//00000000////0000000000///////////////////10.000//////////////////////////////////00000000//////////////////////////00000000///40000//////////KG///////////////00040X00030X00030JN//////////20130506//////////////////////////////////////0000000///00000///00000000/////////////////////////////////////////////////////////////////////////////////    G   GT     GTA////////////////////"
-						.length());
+
 	}
 
 }
